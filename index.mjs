@@ -1,13 +1,13 @@
-// index.mjs
+
 import { AlchemyProvider, formatEther } from 'ethers';
 import dotenv from 'dotenv';
 import winston from 'winston';
 import mongoose from 'mongoose';
-import Deposit from './deposit.js'; // Import the Mongoose model
+import Deposit from './deposit.js'; 
 
-dotenv.config(); // Load environment variables from .env
+dotenv.config(); 
 
-// Set up logging using winston
+
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
@@ -18,21 +18,21 @@ const logger = winston.createLogger({
     ],
 });
 
-// Beacon Deposit Contract address
+
 const beaconDepositContractAddress = "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 
-// Initialize AlchemyProvider with ethers v6
+
 const provider = new AlchemyProvider("mainnet", process.env.ALCHEMY_API_KEY || process.env.ALCHEMY_API_URL);
 
-// Connect to MongoDB with proper error handling (Remove deprecated options)
+
 mongoose.connect(process.env.MONGODB_URI).then(() => {
     logger.info("Connected to MongoDB");
 }).catch((error) => {
     logger.error("Error connecting to MongoDB", error);
-    process.exit(1); // Exit if there's an error connecting to the database
+    process.exit(1); 
 });
 
-// Function to track deposits from Ethereum blockchain
+
 async function trackDeposits() {
     logger.info(`Tracking deposits to contract: ${beaconDepositContractAddress}`);
     
@@ -46,19 +46,19 @@ async function trackDeposits() {
                 if (tx.to && tx.to.toLowerCase() === beaconDepositContractAddress.toLowerCase()) {
                     const depositInfo = {
                         blockNumber: tx.blockNumber,
-                        blockTimestamp: new Date(block.timestamp * 1000), // Convert to JavaScript Date
+                        blockTimestamp: new Date(block.timestamp * 1000), 
                         from: tx.from,
                         to: tx.to,
-                        value: formatEther(tx.value), // Format value to ETH
+                        value: formatEther(tx.value), 
                         hash: tx.hash
                     };
 
                     logger.info(`New deposit detected in transaction: ${tx.hash}`, depositInfo);
 
                     try {
-                        // Save the deposit to the database
+
                         const newDeposit = new Deposit(depositInfo);
-                        await newDeposit.save(); // Ensure the save operation completes
+                        await newDeposit.save(); 
 
                         logger.info(`Deposit saved to MongoDB: ${tx.hash}`);
                     } catch (saveError) {
@@ -72,11 +72,10 @@ async function trackDeposits() {
     });
 }
 
-// Start tracking blockchain deposits
+
 trackDeposits().catch((error) => {
     logger.error("Error tracking deposits:", error);
     process.exit(1);
 });
 
-// Optional: Log message on server start
 logger.info("Server started, monitoring for deposits...");
