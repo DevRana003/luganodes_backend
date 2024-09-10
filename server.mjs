@@ -1,45 +1,45 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import bodyParser from 'body-parser';  // Import body-parser
+import bodyParser from 'body-parser';  
 import Deposit from './deposit.js';
-import path from 'path';  // Import the path module
-import { fileURLToPath } from 'url';  // Import to resolve __dirname
-import TelegramBot from 'node-telegram-bot-api'; // Import Telegram Bot API
-import cors from 'cors';  // Import CORS
+import path from 'path';  
+import { fileURLToPath } from 'url';  
+import TelegramBot from 'node-telegram-bot-api'; 
+import cors from 'cors';  
 
-dotenv.config(); // Load environment variables from .env
+dotenv.config(); 
 
-// Initialize the Express app
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Resolve __dirname since it's not available by default in ES modules
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Enable CORS for all routes
+
 app.use(cors());
 
-// Add body-parser middleware to handle JSON requests
+
 app.use(bodyParser.json());
 
-// Initialize the Telegram Bot with the token
+
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 
-// Function to send a Telegram alert
+
 function sendTelegramAlert(message) {
     bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message)
         .then(() => console.log("Telegram alert sent"))
         .catch((error) => console.error("Error sending Telegram alert:", error));
 }
 
-// Serve the form.html file (for frontend deposit submission)
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'form.html'));
 });
 
-// Connect to MongoDB
+
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log("Connected to MongoDB"))
     .catch((error) => {
@@ -47,7 +47,7 @@ mongoose.connect(process.env.MONGODB_URI)
         process.exit(1);
     });
 
-// Route to manually insert a deposit
+
 app.post('/deposits', async (req, res) => {
     try {
         const deposit = new Deposit({
@@ -59,10 +59,10 @@ app.post('/deposits', async (req, res) => {
             hash: req.body.hash
         });
 
-        // Save the deposit to MongoDB
+
         await deposit.save();
 
-        // Send a Telegram notification with the new deposit details
+
         const message = `
 New deposit added:
 - Block Number: ${deposit.blockNumber}
@@ -71,9 +71,9 @@ New deposit added:
 - Value: ${deposit.value} ETH
 - Transaction Hash: ${deposit.hash}
         `;
-        sendTelegramAlert(message); // Send the alert to Telegram
+        sendTelegramAlert(message); 
 
-        // Respond with success message
+
         res.status(201).json({ message: 'Deposit added successfully!', deposit });
     } catch (error) {
         console.error("Error adding deposit:", error);
@@ -81,10 +81,10 @@ New deposit added:
     }
 });
 
-// Route to fetch all deposits
+
 app.get('/deposits', async (req, res) => {
     try {
-        const deposits = await Deposit.find(); // Fetch all deposits
+        const deposits = await Deposit.find(); 
         res.json(deposits);
     } catch (error) {
         console.error("Error fetching deposits:", error);
@@ -92,10 +92,10 @@ app.get('/deposits', async (req, res) => {
     }
 });
 
-// Route to fetch deposit by transaction hash
+
 app.get('/deposits/:hash', async (req, res) => {
     try {
-        const deposit = await Deposit.findOne({ hash: req.params.hash }); // Fetch deposit by transaction hash
+        const deposit = await Deposit.findOne({ hash: req.params.hash }); 
         if (!deposit) {
             return res.status(404).json({ error: 'Deposit not found' });
         }
@@ -106,7 +106,7 @@ app.get('/deposits/:hash', async (req, res) => {
     }
 });
 
-// Start the Express server
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
